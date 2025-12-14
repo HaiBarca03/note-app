@@ -1,0 +1,36 @@
+import express from 'express'
+import { ApolloServer } from '@apollo/server'
+import { ApolloServerPluginDrainHttpServer } from '@apollo/server/plugin/drainHttpServer'
+import { expressMiddleware } from '@apollo/server/express4'
+import bodyParser from 'body-parser'
+import cors from 'cors'
+import http from 'http'
+
+const app = express()
+const httpServer = http.createServer(app)
+
+const typeDefs = `#graphql
+  type Query {
+    name: String
+  }
+`
+const resolvers = {
+  Query: {
+    name: () => {
+      return 'note-app-backend'
+    }
+  }
+}
+
+const server = new ApolloServer({
+  typeDefs,
+  resolvers,
+  plugins: [ApolloServerPluginDrainHttpServer({ httpServer })]
+})
+
+await server.start()
+
+app.use(cors(), bodyParser.json(), expressMiddleware(server))
+
+await new Promise((resolve) => httpServer.listen({ port: 4000 }, resolve))
+console.log(`Server is running at http://localhost:4000/`)
